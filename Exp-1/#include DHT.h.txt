@@ -1,0 +1,61 @@
+#include "DHT.h"
+ 
+#define DHTPIN 16      
+#define DHTTYPE DHT11  
+DHT dht(DHTPIN, DHTTYPE);
+ 
+const int flameSensorPin = 14;  
+const int buzzerPin = 22;       
+const int ledPin = 5;           
+ 
+void setup() {
+  pinMode(flameSensorPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+ 
+  digitalWrite(buzzerPin, LOW);
+  digitalWrite(ledPin, LOW);
+ 
+  Serial.begin(115200);
+  dht.begin();
+}
+ 
+void loop() {
+  int flameState = digitalRead(flameSensorPin);
+  float t = dht.readTemperature();
+  
+  float h = dht.readHumidity();
+  float temperature = dht.computeHeatIndex(t, h, false);
+ 
+  if (isnan(temperature)) {
+    Serial.println("Failed to read from DHT sensor!");
+    delay(500);
+    return;
+  }
+ 
+  bool fireDetected = false;
+ 
+  
+  if (flameState == LOW) {
+    fireDetected = true;  
+  }
+  if (temperature > 40.0) {
+    fireDetected = true;  
+  }
+ 
+  if (fireDetected) {
+    Serial.print("FIRE DETECTED! Temp: ");
+    Serial.println(temperature);
+    digitalWrite(buzzerPin, HIGH);
+    digitalWrite(ledPin, HIGH);
+  } else {
+    Serial.print("Safe. Temp: ");
+    Serial.println(temperature);
+    digitalWrite(buzzerPin, LOW);
+    digitalWrite(ledPin, LOW);
+  }
+ 
+  delay(1000);  
+}
+
+
